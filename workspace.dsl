@@ -1,5 +1,5 @@
 workspace {
-    name "Budgeting System"
+    name "coinkeeper"
     description "Система управления личным бюджетом"
 
     !identifiers hierarchical
