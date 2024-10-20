@@ -7,14 +7,17 @@ logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 
+# Конфигурация для JWT
 app.config['JWT_SECRET_KEY'] = 'super-secret'
 jwt = JWTManager(app)
 
+# Данные, хранящиеся в памяти
 users = {
     "admin": {"id": str(uuid.uuid4()), "username": "admin", "password": "secret"}
 }
 budget_items = {}
 
+# Регистрация нового пользователя
 @app.route('/register', methods=['POST'])
 def register():
     username = request.json.get('username')
@@ -27,6 +30,7 @@ def register():
     users[username] = {"id": user_id, "username": username, "password": password}
     return jsonify({"id": user_id, "username": username}), 201
 
+# Аутентификация пользователя и выдача JWT токена
 @app.route('/login', methods=['POST'])
 def login():
     username = request.json.get('username')
@@ -40,6 +44,7 @@ def login():
     access_token = create_access_token(identity=username)
     return jsonify(access_token=access_token)
 
+# Получение информации о пользователе (требуется JWT)
 @app.route('/user', methods=['GET'])
 @jwt_required()
 def get_user():
@@ -47,6 +52,13 @@ def get_user():
     user = users.get(current_user)
     return jsonify({"id": user["id"], "username": user["username"]}), 200
 
+# Получение всех зарегистрированных пользователей
+@app.route('/users', methods=['GET'])
+@jwt_required()
+def get_all_users():
+    return jsonify(users), 200
+
+# Создание новой бюджетной записи
 @app.route('/budget', methods=['POST'])
 @jwt_required()
 def create_budget_item():
@@ -61,6 +73,7 @@ def create_budget_item():
     budget_items[item_id] = item
     return jsonify(item), 201
 
+# Получение всех бюджетных записей пользователя
 @app.route('/budget', methods=['GET'])
 @jwt_required()
 def get_budget_items():
@@ -68,6 +81,7 @@ def get_budget_items():
     user_items = [item for item in budget_items.values() if item['user'] == user]
     return jsonify(user_items), 200
 
+# Редактирование бюджетной записи
 @app.route('/budget/<item_id>', methods=['PUT'])
 @jwt_required()
 def edit_budget_item(item_id):
@@ -81,6 +95,7 @@ def edit_budget_item(item_id):
     item['amount'] = request.json.get('amount', item['amount'])
     return jsonify(item), 200
 
+# Удаление бюджетной записи
 @app.route('/budget/<item_id>', methods=['DELETE'])
 @jwt_required()
 def delete_budget_item(item_id):
